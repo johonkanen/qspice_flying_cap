@@ -1,8 +1,9 @@
-// Automatically generated C++ file on Sun Dec 28 09:08:33 2025
+// Automatically generated C++ file on Tue Dec 30 07:26:04 2025
 //
-// To build with Digital Mars C++ Compiler:
+// To build with Digital Mars C++ Compiler: 
 //
 //    dmc -mn -WD fc_4level_x1.cpp kernel32.lib
+
 
 #include <cmath>
 union uData
@@ -35,29 +36,33 @@ int __stdcall DllMain(void *module, unsigned int reason, void *reserved) { retur
 #undef gate6
 #undef gate7
 #undef gate8
+#undef Udc
 
-double pwm = 0;
-double pwm_prev = 1;
-double dt = 0;
-double prev_t = 0;
+double pwm      = 0;
+double pwm_prev = 0;
+double dt       = 0;
+double prev_t   = 0;
 double dt_count = 0;
 
 extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, union uData *data)
 {
-   double &gate1 = data[0].d; // output
-   double &gate2 = data[1].d; // output
-   double &gate3 = data[2].d; // output
-   double &gate4 = data[3].d; // output
-   double &gate5 = data[4].d; // output
-   double &gate6 = data[5].d; // output
-   double &gate7 = data[6].d; // output
-   double &gate8 = data[7].d; // output
+   double  Udc   = data[0].d; // input
+   double &gate1 = data[1].d; // output
+   double &gate2 = data[2].d; // output
+   double &gate3 = data[3].d; // output
+   double &gate4 = data[4].d; // output
+   double &gate5 = data[5].d; // output
+   double &gate6 = data[6].d; // output
+   double &gate7 = data[7].d; // output
+   double &gate8 = data[8].d; // output
 
-// Implement module evaluation code here:
+    double pwm_hi = 0.0;
+    double pwm_lo = 0.0;
 
-    double carrier = std::fmod(t, 1e-6)*1e6;
+    double carrier = std::fmod(t, 5e-6)/5e-6;
     double bridge_voltage_ref = 50.0;
-    double timestep = 0;
+    double timestep = 0.0;
+
     if (t > 0.0)
         timestep = t - prev_t;
 
@@ -67,26 +72,16 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     }
 
     double duty = bridge_voltage_ref/200.0;
-
     if ((carrier > (0.5-duty/2.0)) && (carrier < (0.5+duty/2.0)))
     {
-        pwm = 5;
+        pwm = 5.0;
 
     } else
     {
-        pwm = 0;
+        pwm = 0.0;
 
     }
-    gate1 = pwm;
-    gate2 = pwm;
-    gate3 = pwm;
-    gate4 = pwm;
-    gate5 = 5-pwm;
-    gate6 = 5-pwm;
-    gate7 = 5-pwm;
-    gate8 = 5-pwm;
-
-    if (dt_count >= 0)
+    if (dt_count >= 0.0)
     {
         dt_count = dt_count - timestep;
     }
@@ -94,19 +89,25 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     if (pwm_prev != pwm )
     {
         dt_count = 10.0e-9;
-
-    // if (dt_count >= 0.0)
-    // {
-        gate1 = 0;
-        gate2 = 0;
-        gate3 = 0;
-        gate4 = 0;
-        gate5 = 0;
-        gate6 = 0;
-        gate7 = 0;
-        gate8 = 0;
-    // }
     }
+
+    if (dt_count >= 0.0)
+    {
+        pwm_hi = 0.0;
+        pwm_lo = 0.0;
+    } else 
+    {
+        pwm_hi = pwm;
+        pwm_lo = 5.0-pwm;
+    }
+    gate1 = pwm_hi;
+    gate2 = pwm_hi;
+    gate3 = pwm_hi;
+    gate4 = pwm_hi;
+    gate5 = pwm_lo;
+    gate6 = pwm_lo;
+    gate7 = pwm_lo;
+    gate8 = pwm_lo;
 
     pwm_prev = pwm;
     prev_t = t;
