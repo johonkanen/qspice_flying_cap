@@ -75,13 +75,7 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
 
     double sw_frequency = 500e3;
     double sw_period = 1/sw_frequency;
-
-
-    double carrier = std::fmod(t+sw_period*0/4, sw_period)/sw_period;
-    double carrier2= std::fmod(t+sw_period*1/4, sw_period)/sw_period;
-    double carrier3= std::fmod(t+sw_period*2/4, sw_period)/sw_period;
-    double carrier4= std::fmod(t+sw_period*3/4, sw_period)/sw_period;
-
+    
     double bridge_voltage_ref = 50.0;
     double deadtime = 10.0e-9;
 
@@ -94,14 +88,18 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     double lower_bound = 0.5-duty/2.0;
     double upper_bound = 0.5+duty/2.0;
 
-    pwm[0] = ((carrier > lower_bound) && (carrier < upper_bound)) ? 5.0 : 0.0;
+    double carrier[4];
+    for (int i = 0; i < 4; ++i) {
+        carrier[i] = std::fmod(t + sw_period * i / 4.0, sw_period) / sw_period;
+        pwm[i] = ((carrier[i] > lower_bound) && (carrier[i] < upper_bound)) ? 5.0 : 0.0;
+    }
 
     if (dt_count >= 0.0)
     {
         dt_count = dt_count - timestep;
     }
 
-    if (pwm_prev != pwm )
+    if (pwm_prev[0] != pwm[0] )
     {
         dt_count = deadtime;
     }
