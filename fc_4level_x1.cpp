@@ -46,25 +46,31 @@ double dt_count = 0;
 
 extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, union uData *data)
 {
-   double  Udc   = data[0].d; // input
-   double &gate1 = data[1].d; // output
-   double &gate2 = data[2].d; // output
-   double &gate3 = data[3].d; // output
-   double &gate4 = data[4].d; // output
-   double &gate5 = data[5].d; // output
-   double &gate6 = data[6].d; // output
-   double &gate7 = data[7].d; // output
-   double &gate8 = data[8].d; // output
+    double  Udc   = data[0].d; // input
+    double &gate1 = data[1].d; // output
+    double &gate2 = data[2].d; // output
+    double &gate3 = data[3].d; // output
+    double &gate4 = data[4].d; // output
+    double &gate5 = data[5].d; // output
+    double &gate6 = data[6].d; // output
+    double &gate7 = data[7].d; // output
+    double &gate8 = data[8].d; // output
 
     double pwm_hi = 0.0;
     double pwm_lo = 0.0;
 
-    double carrier = std::fmod(t, 5e-6)/5e-6;
+    double sw_frequency = 500e3;
+    double sw_period = 1/sw_frequency;
+
+    double carrier = std::fmod(t+sw_period*0/4, sw_period)/sw_period;
+    double carrier2= std::fmod(t+sw_period*1/4, sw_period)/sw_period;
+    double carrier3= std::fmod(t+sw_period*2/4, sw_period)/sw_period;
+    double carrier4= std::fmod(t+sw_period*3/4, sw_period)/sw_period;
+
     double bridge_voltage_ref = 50.0;
     double timestep = 0.0;
 
-    if (t > 0.0)
-        timestep = t - prev_t;
+    if (t > 0.0) timestep = t - prev_t;
 
     if (t > 10.0e-3)
     {
