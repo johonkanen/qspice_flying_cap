@@ -44,8 +44,17 @@ double dt       = 0;
 double prev_t   = 0;
 double dt_count = 0;
 
+// class pwm_modulator
+//
+typedef struct t_gates
+{
+    double hi;
+    double lo;
+};
+
 extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, union uData *data)
 {
+
     double  Udc   = data[0].d; // input
     double &gate1 = data[1].d; // output
     double &gate2 = data[2].d; // output
@@ -56,8 +65,10 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     double &gate7 = data[7].d; // output
     double &gate8 = data[8].d; // output
 
-    double pwm_hi = 0.0;
-    double pwm_lo = 0.0;
+    double timestep = 0.0;
+    if (t > 0.0) timestep = t - prev_t; // needed for initial count
+
+    t_gates gates = {.hi = 0.0, .lo = 0.0};
 
     double sw_frequency = 500e3;
     double sw_period = 1/sw_frequency;
@@ -68,9 +79,7 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     double carrier4= std::fmod(t+sw_period*3/4, sw_period)/sw_period;
 
     double bridge_voltage_ref = 50.0;
-    double timestep = 0.0;
-
-    if (t > 0.0) timestep = t - prev_t;
+    double deadtime = 10.0e-9;
 
     if (t > 10.0e-3)
     {
@@ -78,15 +87,11 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     }
 
     double duty = bridge_voltage_ref/200.0;
-    if ((carrier > (0.5-duty/2.0)) && (carrier < (0.5+duty/2.0)))
-    {
-        pwm = 5.0;
+    double lower_bound = 0.5-duty/2.0;
+    double upper_bound = 0.5+duty/2.0;
 
-    } else
-    {
-        pwm = 0.0;
+    pwm = ((carrier > lower_bound) && (carrier < upper_bound)) ? 5.0 : 0.0;
 
-    }
     if (dt_count >= 0.0)
     {
         dt_count = dt_count - timestep;
@@ -94,26 +99,26 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
 
     if (pwm_prev != pwm )
     {
-        dt_count = 10.0e-9;
+        dt_count = deadtime;
     }
 
     if (dt_count >= 0.0)
     {
-        pwm_hi = 0.0;
-        pwm_lo = 0.0;
+        gates.hi = 0.0; gates.lo=0.0;
     } else 
     {
-        pwm_hi = pwm;
-        pwm_lo = 5.0-pwm;
+        gates.hi = pwm; gates.lo = 5.0-pwm;
     }
-    gate1 = pwm_hi;
-    gate2 = pwm_hi;
-    gate3 = pwm_hi;
-    gate4 = pwm_hi;
-    gate5 = pwm_lo;
-    gate6 = pwm_lo;
-    gate7 = pwm_lo;
-    gate8 = pwm_lo;
+
+    gate1 = 
+    gate2 = 
+    gate3 = 
+    gate4 = gates.hi;
+
+    gate5 = 
+    gate6 = 
+    gate7 = 
+    gate8 = gates.lo;
 
     pwm_prev = pwm;
     prev_t = t;
