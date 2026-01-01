@@ -40,20 +40,21 @@ int __stdcall DllMain(void *module, unsigned int reason, void *reserved) { retur
 #include <cmath>
 #include <vector>
 
-std::vector<double> pwm(4, 0.0);
-std::vector<double> pwm_prev(4, 0.0);
-
-double dt       = 0;
-double prev_t   = 0;
-double dt_count = 0;
-
-// class pwm_modulator
-//
 typedef struct t_gates
 {
     double hi;
     double lo;
 };
+
+t_gates c_gates_off = {.hi = 0.0, .lo = 0.0};
+
+std::vector<double> pwm(4, 0.0);
+std::vector<double> pwm_prev(4, 0.0);
+std::vector<double> dt_count(4, 0.0);
+
+double dt       = 0;
+double prev_t   = 0;
+
 
 extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, union uData *data)
 {
@@ -71,56 +72,58 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     double timestep = 0.0;
     if (t > 0.0) timestep = t - prev_t; // needed for initial count
 
-    t_gates gates = {.hi = 0.0, .lo = 0.0};
+    std::vector<t_gates> gates(4, c_gates_off);
 
-    double sw_frequency = 500e3;
+    double sw_frequency = 500e3/4;
     double sw_period = 1/sw_frequency;
     
-    double bridge_voltage_ref = 50.0;
-    double deadtime = 10.0e-9;
+    double bridge_voltage_ref = 180.0;
+    double deadtime = 20.0e-9;
 
-    if (t > 10.0e-3)
-    {
-        bridge_voltage_ref = 100.0;
-    }
-
+    // if (t > 10.0e-3)
+    // {
+    //     bridge_voltage_ref = 100.0;
+    // }
+    //
     double duty = bridge_voltage_ref/200.0;
     double lower_bound = 0.5-duty/2.0;
     double upper_bound = 0.5+duty/2.0;
 
-    double carrier[4];
-    for (int i = 0; i < 4; ++i) {
-        carrier[i] = std::fmod(t + sw_period * i / 4.0, sw_period) / sw_period;
+    const int number_of_carriers = 4;
+    double carrier[number_of_carriers];
+
+    for (int i = 0; i < number_of_carriers; ++i) {
+        carrier[i] = std::fmod(t + sw_period * i / (double)number_of_carriers, sw_period) / sw_period;
         pwm[i] = ((carrier[i] > lower_bound) && (carrier[i] < upper_bound)) ? 5.0 : 0.0;
+
+        if (dt_count[i] >= 0.0)
+        {
+            dt_count[i] = dt_count[i] - timestep;
+        }
+
+        if (pwm_prev[i] != pwm[i] )
+        {
+            dt_count[i] = deadtime;
+        }
+
+        if (dt_count[i] >= 0.0)
+        {
+            gates[i] = c_gates_off;
+        } else 
+        {
+            gates[i].hi = pwm[i]; gates[i].lo = 5.0-pwm[i];
+        }
     }
 
-    if (dt_count >= 0.0)
-    {
-        dt_count = dt_count - timestep;
-    }
+    gate1 = gates[0].hi; 
+    gate2 = gates[1].hi; 
+    gate3 = gates[2].hi; 
+    gate4 = gates[3].hi;
 
-    if (pwm_prev[0] != pwm[0] )
-    {
-        dt_count = deadtime;
-    }
-
-    if (dt_count >= 0.0)
-    {
-        gates.hi = 0.0; gates.lo=0.0;
-    } else 
-    {
-        gates.hi = pwm[0]; gates.lo = 5.0-pwm[0];
-    }
-
-    gate1 = 
-    gate2 = 
-    gate3 = 
-    gate4 = gates.hi;
-
-    gate5 = 
-    gate6 = 
-    gate7 = 
-    gate8 = gates.lo;
+    gate5 = gates[3].lo;
+    gate6 = gates[2].lo;
+    gate7 = gates[1].lo;
+    gate8 = gates[0].lo;
 
     pwm_prev = pwm;
     prev_t = t;
