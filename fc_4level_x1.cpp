@@ -55,7 +55,6 @@ std::vector<double> dt_count(4, 0.0);
 double dt       = 0;
 double prev_t   = 0;
 
-
 extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, union uData *data)
 {
 
@@ -68,31 +67,29 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     double &gate6 = data[6].d; // output
     double &gate7 = data[7].d; // output
     double &gate8 = data[8].d; // output
+    double &iload = data[9].d; // output
 
     double timestep = 0.0;
     if (t > 0.0) timestep = t - prev_t; // needed for initial count
 
-    std::vector<t_gates> gates(4, c_gates_off);
-
-    double sw_frequency = 500e3/4;
-    double sw_period = 1/sw_frequency;
-    
     double bridge_voltage_ref = 180.0;
     double deadtime = 20.0e-9;
 
-    // if (t > 10.0e-3)
-    // {
-    //     bridge_voltage_ref = 100.0;
-    // }
-    //
     double duty = bridge_voltage_ref/200.0;
-    double lower_bound = 0.5-duty/2.0;
-    double upper_bound = 0.5+duty/2.0;
 
+    //--------------------------------
     const int number_of_carriers = 4;
-    double carrier[number_of_carriers];
+    std::vector<t_gates> gates(number_of_carriers, c_gates_off);
+
+    double sw_frequency = 250e3/number_of_carriers;
+    double sw_period = 1/sw_frequency;
 
     for (int i = 0; i < number_of_carriers; ++i) {
+
+        double carrier[number_of_carriers];
+        double lower_bound = 0.5-duty/2.0;
+        double upper_bound = 0.5+duty/2.0;
+
         carrier[i] = std::fmod(t + sw_period * i / (double)number_of_carriers, sw_period) / sw_period;
         pwm[i] = ((carrier[i] > lower_bound) && (carrier[i] < upper_bound)) ? 5.0 : 0.0;
 
@@ -114,6 +111,7 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
             gates[i].hi = pwm[i]; gates[i].lo = 5.0-pwm[i];
         }
     }
+    //--------------------------------
 
     gate1 = gates[0].hi; 
     gate2 = gates[1].hi; 
@@ -124,6 +122,11 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     gate6 = gates[2].lo;
     gate7 = gates[1].lo;
     gate8 = gates[0].lo;
+
+    // if (t > 20e-3)
+    // {
+        iload = 10;
+    // }
 
     pwm_prev = pwm;
     prev_t = t;
