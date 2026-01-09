@@ -1,6 +1,6 @@
 // Automatically generated C++ file on Tue Dec 30 07:26:04 2025
 //
-// To build with Digital Mars C++ Compiler: 
+// To build with Digital Mars C++ Compiler:
 //
 //    dmc -mn -WD fc_4level_x1.cpp kernel32.lib
 
@@ -58,7 +58,7 @@ double prev_t   = 0;
 extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, union uData *data)
 {
 
-    double  Udc   = data[0].d; // input
+    double &Udc   = data[0].d; // input
     double &gate1 = data[1].d; // output
     double &gate2 = data[2].d; // output
     double &gate3 = data[3].d; // output
@@ -69,28 +69,36 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
     double &gate8 = data[8].d; // output
     double &iload = data[9].d; // output
 
+    double &test1 = data[10].d; // output
+    double &test2 = data[11].d; // output
+    double &test3 = data[12].d; // output
+    double &test4 = data[13].d; // output
+
     double timestep = 0.0;
     if (t > 0.0) timestep = t - prev_t; // needed for initial count
 
     double bridge_voltage_ref = 180.0;
     double deadtime = 20.0e-9;
 
-    double duty = bridge_voltage_ref/200.0;
+    double duty = 172.0/200.0;
 
     //--------------------------------
-    const int number_of_carriers = 4;
+    const int number_of_carriers = 3;
     std::vector<t_gates> gates(number_of_carriers, c_gates_off);
+    std::vector<double> phase(number_of_carriers, 0.0);
+    std::vector<double> carrier(number_of_carriers, 0.0);
+
+    // phase[0] = 0.07;
 
     double sw_frequency = 250e3/number_of_carriers;
     double sw_period = 1/sw_frequency;
 
     for (int i = 0; i < number_of_carriers; ++i) {
 
-        double carrier[number_of_carriers];
         double lower_bound = 0.5-duty/2.0;
         double upper_bound = 0.5+duty/2.0;
 
-        carrier[i] = std::fmod(t + sw_period * i / (double)number_of_carriers, sw_period) / sw_period;
+        carrier[i] = std::fmod(t + sw_period * i / (double)number_of_carriers + sw_period*phase[i], sw_period) / sw_period;
         pwm[i] = ((carrier[i] > lower_bound) && (carrier[i] < upper_bound)) ? 5.0 : 0.0;
 
         if (dt_count[i] >= 0.0)
@@ -106,27 +114,38 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
         if (dt_count[i] >= 0.0)
         {
             gates[i] = c_gates_off;
-        } else 
+        } else
         {
-            gates[i].hi = pwm[i]; gates[i].lo = 5.0-pwm[i];
+            gates[i].hi = pwm[i];
+            gates[i].lo = 5.0-pwm[i];
         }
     }
     //--------------------------------
+    iload = 10.0;
+    if (t > 50e-3) iload = -10.0;
+    if (t > 80e-3) iload = 0.0;
 
-    gate1 = gates[0].hi; 
-    gate2 = gates[1].hi; 
-    gate3 = gates[2].hi; 
-    gate4 = gates[3].hi;
+    Udc = 200.0;
+    if (t > 5e-3)
+    {
+        Udc = 170.0;
+    }
 
-    gate5 = gates[3].lo;
-    gate6 = gates[2].lo;
-    gate7 = gates[1].lo;
+
+    gate1 = gates[0].hi;
+    gate2 = gates[0].hi;
+    gate3 = gates[1].hi;
+    gate4 = gates[2].hi;
+
+    gate5 = gates[2].lo;
+    gate6 = gates[1].lo;
+    gate7 = gates[0].lo;
     gate8 = gates[0].lo;
 
-    // if (t > 20e-3)
-    // {
-        iload = 10;
-    // }
+    test1 = carrier[0] * 5.0;
+    test2 = carrier[1] * 5.0;
+    test3 = carrier[2] * 5.0;
+    test4 = carrier[2] * 5.0;
 
     pwm_prev = pwm;
     prev_t = t;
