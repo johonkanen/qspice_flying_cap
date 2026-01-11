@@ -2,3 +2,6 @@
 *.dll
 *.qraw
 *.qopraw
+*.cir
+*.utf8
+*.csv

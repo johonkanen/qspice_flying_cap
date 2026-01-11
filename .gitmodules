@@ -1,0 +1,3 @@
+[submodule "hVHDL_ode"]
+	path = hVHDL_ode
+	url = https://github.com/hVHDL/hVHDL_ode.git

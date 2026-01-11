@@ -90,7 +90,7 @@ extern "C" __declspec(dllexport) void fc_4level_x1(void **opaque, double t, unio
 
     // phase[0] = 0.07;
 
-    double sw_frequency = 250e3/number_of_carriers;
+    double sw_frequency = 250.0e3/number_of_carriers;
     double sw_period = 1/sw_frequency;
 
     for (int i = 0; i < number_of_carriers; ++i) {

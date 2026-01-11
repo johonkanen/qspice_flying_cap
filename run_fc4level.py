@@ -10,7 +10,7 @@ run.InitPlot()
 
 run.qsch2cir()
 run.cir2qraw()
-run.setNline(19999)  # add enough plot points
+run.setNline(49999)  # add enough plot points
 
 df = run.LoadQRAW(["V(vout)", "V(fc2p,fc2n)", "V(fc1p,fc1n)", "I(L1)", "V(vdc)"])
 df.to_csv("fc_4level_data.csv", index=False)
