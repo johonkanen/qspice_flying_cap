@@ -5,3 +5,6 @@
 *.cir
 *.utf8
 *.csv
+*.map
+*.def
+*.obj
