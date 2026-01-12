@@ -1,7 +1,7 @@
 import matplotlib.pyplot as pyplot
 import pandas as pd
 
-fc_data = pd.read_csv("/mnt/c/dev/qspice_circuits/fc_4level_data.csv")
+fc_data = pd.read_csv("./fc_4level_data.csv")
 ode_data = pd.read_csv("./fc_4level_tb.dat", sep='\s+')
 
 fig1, (axT, axB) = pyplot.subplots(2,1,sharex=True,constrained_layout=True)
